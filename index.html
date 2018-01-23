@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8">
+
+
+<style>
+h1 {
+  font-family: Optima;
+  text-align: center;
+  font-size: 32;
+}
+
+text.shadow {
+  stroke: white;
+  stroke-width: 4px;
+  opacity: 0.2;
+}
+
+.center{
+	margin:auto;
+	width:400px;
+}
+
+</style>
+<head>
+    <script src="http://d3js.org/d3.v4.min.js"></script>
+</head>
+<body>
+<h1>Salary of NBA Players on Each Team Bubble Chart (2017-2018)</h1>
+<center>
+<select id="selector"></select>
+</center>
+<script src="http://d3js.org/d3.v4.min.js"></script>
+
+<div class="center">
+<script>
+(function () {
+	var margin = {top: 20, right: 20, bottom: 30, left: 40},
+	    width = 1460 - margin.left - margin.right,
+	    height = 960 - margin.top - margin.bottom;
+
+	var svg = d3.select("body")
+				.append("svg")
+				.attr("height", height)
+				.attr("width", width)
+				.append("g")
+				.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+	d3.queue()
+		.defer(d3.csv, "salaryNBA.csv")
+		.await(ready)
+
+
+	function ready (error, datapoints) {
+			datapoints.forEach(function(d) {
+				d.Salary17to18 = +d.Salary17to18;
+			});
+
+		var forceX = d3.forceX(function(d){
+						return width/2;
+					}).strength(0.05);
+
+
+		var forceY = d3.forceY(function(d){
+						return height/2;
+					}).strength(0.05);
+
+		var simulation = d3.forceSimulation()
+						   .force("x", forceX)
+						   .force("y", forceY)
+						   .force("collide", d3.forceCollide(function(d){
+						   		return ((d.Salary17to18)/20000) ** 0.5;
+						   }));
+
+		var teams = ["All", "ATL", "BOS", "BRK", "CHI", "CHO", "CLE", "DAL", "DEN", "DET", "GSW", "HOU", "IND", "LAC", "LAL", "MEM", "MIA", "MIL", "MIN", "NOP", "NYK", "OKC", "ORL", "PHI", "PHO", "POR", "SAC", "SAS", "TOR", "UTA", "WAS"]
+
+  		var selector = d3.select("#selector");
+
+  		selector
+    		.selectAll("option")
+    		.data(teams)
+    		.enter()
+    		.append("option")
+    	    .text(function(d){ return d; })
+        	.attr("value", function(d){ return d; });
+
+		// forceX(function(d){
+		// 				for(i = 0; i < teams.length; i ++){
+		// 					if(teams[i] == d.Tm){
+		// 						return 750;
+		// 					} else {
+		// 						return 0;
+		// 					}
+		// 				}
+		// 			}).strength(0.05);
+
+        selector
+    		.on("change", function(){
+    			var alpha = .25;
+        		var value = selector.property("value");
+        		if(value == "All"){
+    				alpha = 0.015;
+    			}
+    			simulation.force("x", d3.forceX(function(d){
+    				if(value == "All"){
+    					return width/2;
+    				} else if(value == d.Tm){
+    					return width/2;
+    				} else {
+    					return -500;
+    				}
+    			})).alphaTarget(alpha)
+        			.restart();
+
+        		simulation.force("y", d3.forceY(function(d){
+    				if(value == "All"){
+    					return height/2;
+    				} else if(value == d.Tm){
+    					return height/4;
+    				} else {
+    					return -150;
+    				}
+    			})).alphaTarget(alpha)
+        			.restart();
+    		});
+
+		var circles = svg.selectAll("circle")
+						.data(datapoints)
+						.enter().append("circle")
+						.attr("class", function(d){ return d.Tm; })
+						.attr("stroke", "black")
+						.attr("r", function(d){
+							// console.log(this.attr("class"));
+							return ((d.Salary17to18)/20000) ** 0.5;
+						})
+						.attr("fill", function(d){
+							if(d.Tm == "ATL"){
+								return "darkred";
+							} else if(d.Tm == "BOS"){
+								return "darkgreen";
+							} else if(d.Tm == "BRK"){
+								return "white";
+							} else if(d.Tm == "CHI"){
+								return "red";
+							} else if(d.Tm == "CHO"){
+								return "lightblue";
+							} else if(d.Tm == "CLE"){
+								return "#742f37";
+							} else if(d.Tm == "DAL"){
+								return "#4169e1";
+							} else if(d.Tm == "DEN"){
+								return "#b0e0e6";
+							} else if(d.Tm == "DET"){
+								return "#0067B1";
+							} else if(d.Tm == "GSW"){
+								return "#FFCD34";
+							} else if(d.Tm == "HOU"){
+								return "gold";
+							} else if(d.Tm == "IND"){
+								return "#CCCC00";
+							} else if(d.Tm == "LAC"){
+								return "#006BDF";
+							} else if(d.Tm == "LAL"){
+								return "purple";
+							} else if(d.Tm == "MEM"){
+								return "#66778C";
+							} else if(d.Tm == "MIA"){
+								return "#98002E";
+							} else if(d.Tm == "MIL"){
+								return "#00471B";
+							} else if(d.Tm == "MIN"){
+								return "#005083";
+							} else if(d.Tm == "NOP"){
+								return "#002B5C";
+							} else if(d.Tm == "NYK"){
+								return "orange";
+							} else if(d.Tm == "OKC"){
+								return "blue";
+							} else if(d.Tm == "ORL"){
+								return "#0B77BD";
+							} else if(d.Tm == "PHI"){
+								return "#006BB6";
+							} else if(d.Tm == "PHO"){
+								return "#E56020";
+							} else if(d.Tm == "POR"){
+								return "#E13A3E";
+							} else if(d.Tm == "SAC"){
+								return "#5A2D81";
+							} else if(d.Tm == "SAS"){
+								return "#C4CED4";
+							} else if(d.Tm == "TOR"){
+								return "#CD1141";
+							} else if(d.Tm == "UTA"){
+								return "#00471B";
+							} else if(d.Tm == "WAS"){
+								return "#002B5C";
+							}
+						})
+						.attr("stroke",  function(d){
+							return "black";
+						})
+						.on("mouseover", function(d){	d3.selectAll("circle")
+															.attr("opacity", 0.4);
+														d3.select(this)
+															.attr("stroke-width", 5)
+															.attr("stroke", "white")
+															.attr("opacity", 0.9);
+														tooltip
+															.text(d.Player + " (" + d.Tm + "): $" + Math.round(100*(d.Salary17to18/1000000))/100 + "m")
+															.attr("stroke-width", 5+"px")
+															.style("visibility", "visible");
+														})
+						.on("mousemove", function(){
+							tooltip
+								.style("top", (event.pageY-10)+"px")	
+      							.style("left",(event.pageX+10)+"px")
+      							.style("text-decoration", "underline") 
+      							.attr("class", "shadow");})
+          				.on("mouseout", function(){		d3.select(this)
+          													.attr("stroke-width", 1)
+          													.attr("stroke", "black");
+          												d3.selectAll("circle")
+															.attr("opacity", 1);
+          												return tooltip.style("visibility", "hidden");});
+
+
+		simulation.nodes(datapoints)
+			.on("tick", ticked);
+
+		function ticked() {
+			circles
+				.attr("cx", function(d) {
+					return d.x;
+				})
+				.attr("cy", function(d) {
+					return d.y;
+				});
+		}
+
+		var tooltip = d3.select("body")
+			.data(datapoints)
+			.append("div")
+			.style("position", "absolute")
+			.style("z-index", "10")
+			.style("visibility", "hidden");
+			// .text(function(d){ return d.Player; });
+	}
+})();
+
+</script>
+</div>
+</body>
+</html> 
